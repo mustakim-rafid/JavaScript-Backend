@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "This is a javascript backend project (MERN).",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon src/index.js"
   },
   "keywords": [
     "JavaScript",
@@ -12,5 +13,9 @@
     "Chaa"
   ],
   "author": "Mustakim Ali Chy",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.7",
+    "prettier": "^3.3.3"
+  }
 }
