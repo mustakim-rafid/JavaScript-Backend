@@ -169,7 +169,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         .status(200)
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
-        .send(
+        .json(
             new ApiResponse(
                 200,
                 {},
@@ -194,7 +194,7 @@ const resetPassword = asyncHandler(async (req, res) => {
     if (!userWithNewPassword) {
         throw new ApiError(500, "Something went wrong while reseting the password")
     }
-    res.status(200).send(
+    res.status(200).json(
         new ApiResponse(200, {}, "Password changed successfully")
     )
 })
@@ -211,7 +211,7 @@ const resetEmailandFullName = asyncHandler(async (req, res) => {
     if (!userWithNewEmailandFullName) {
         throw new ApiError(500, "Something went wrong while reseting email and fullname")
     }
-    res.status(200).send(
+    res.status(200).json(
         new ApiResponse(200, {}, "Profile updated successfully")
     )
 })
@@ -222,7 +222,7 @@ const getUserData = asyncHandler(async (req, res) => {
     if (!user) {
         throw new ApiError(500, "User not found")
     }
-    res.status(200).send(
+    res.status(200).json(
         new ApiResponse(200, user, "User data sended successfully")
     )
 })
