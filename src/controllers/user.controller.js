@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js"
 import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
+import jwt from "jsonwebtoken"
 
 const generateAccessandRefreshToken = async (userId) => {
     try {
@@ -22,7 +23,7 @@ const generateAccessandRefreshToken = async (userId) => {
     }
 }
 
-const registerUser = asyncHandler( async (req, res) => {
+const registerUser = asyncHandler(async (req, res) => {
     // Get user details from frontend
     const {username, email, fullName, password} = req.body
     // Validation
@@ -76,7 +77,7 @@ const registerUser = asyncHandler( async (req, res) => {
     )
 })
 
-const loginUser = asyncHandler( async (req, res) => {
+const loginUser = asyncHandler(async (req, res) => {
     // get user details from frontend
     const {identifier, password} = req.body
     // cheak if user exists or not
@@ -114,7 +115,7 @@ const loginUser = asyncHandler( async (req, res) => {
     )
 })
 
-const logoutUser = asyncHandler( async (req, res) => {
+const logoutUser = asyncHandler(async (req, res) => {
     const userId = req.user._id
 
     const user = await User.findByIdAndUpdate(userId, {
@@ -140,8 +141,98 @@ const logoutUser = asyncHandler( async (req, res) => {
     ))
 })
 
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    const token = req.cookies?.refreshToken || req.body?.refreshToken;
+    const user = await User.findById(token._id)
+    if (!user) {
+        throw new ApiError(400, "Invalid token")
+    }
+    try {
+        const decodedToken = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET)
+        if (decodedToken !== user.refreshToken) {
+            throw new ApiError(401, "Refresh token not found or expired")
+        }
+        const {accessToken, refreshToken} = await generateAccessandRefreshToken(user._id)
+        const newUser = await User.findByIdAndUpdate({
+            $set: {
+                refreshToken
+            }
+        }, {new: true})
+        if (!newUser) {
+            throw new ApiError(500, "Something went wrong while updating the user")
+        }
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
+        res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .send(
+            new ApiResponse(
+                200,
+                {},
+                "Access token refreshed"
+            )
+        )
+    } catch (error) {
+        throw new ApiError(500, "Something went wrong while refreshing the access token")
+    }
+})
+
+const resetPassword = asyncHandler(async (req, res) => {
+    const {oldPassword, newPassword} = req.body
+    const userId = req.user._id
+    const user = await User.findById(userId)
+    if (oldPassword !== user.password) {
+        throw new ApiError(400, "Incorrect current password")
+    }
+    const userWithNewPassword = await User.findByIdAndUpdate(user._id, {
+        $set: { password: newPassword }
+    }, {new: true})
+    if (!userWithNewPassword) {
+        throw new ApiError(500, "Something went wrong while reseting the password")
+    }
+    res.status(200).send(
+        new ApiResponse(200, {}, "Password changed successfully")
+    )
+})
+
+const resetEmailandFullName = asyncHandler(async (req, res) => {
+    const {email, fullName} = req.body
+    const userId = req.user._id
+    const userWithNewEmailandFullName = await User.findByIdAndUpdate(userId, {
+        $set: {
+            email,
+            fullName
+        }
+    }, {new: true})
+    if (!userWithNewEmailandFullName) {
+        throw new ApiError(500, "Something went wrong while reseting email and fullname")
+    }
+    res.status(200).send(
+        new ApiResponse(200, {}, "Profile updated successfully")
+    )
+})
+
+const getUserData = asyncHandler(async (req, res) => {
+    const userId = req.user._id
+    const user = await User.findById(userId).select("-password -refreshToken")
+    if (!user) {
+        throw new ApiError(500, "User not found")
+    }
+    res.status(200).send(
+        new ApiResponse(200, user, "User data sended successfully")
+    )
+})
+
 export {
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    refreshAccessToken,
+    resetPassword,
+    resetEmailandFullName,
+    getUserData
 }
