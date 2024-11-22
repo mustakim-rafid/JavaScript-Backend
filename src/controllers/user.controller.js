@@ -183,23 +183,24 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 const resetPassword = asyncHandler(async (req, res) => {
     const {oldPassword, newPassword} = req.body
-    const userId = req.user._id
+    const userId = req.user?._id
     const user = await User.findById(userId)
-    if (oldPassword !== user.password) {
+    if (!user) {
+        throw new ApiError(500, "User not found")       
+    }
+    const isOldPasswordValid = await user.isPasswordCorrect(oldPassword)
+    if (!isOldPasswordValid) {
         throw new ApiError(400, "Incorrect current password")
     }
-    const userWithNewPassword = await User.findByIdAndUpdate(user._id, {
-        $set: { password: newPassword }
-    }, {new: true})
-    if (!userWithNewPassword) {
-        throw new ApiError(500, "Something went wrong while reseting the password")
-    }
+    user.password = newPassword
+    await user.save({validateBeforeSave: false})
+
     res.status(200).json(
         new ApiResponse(200, {}, "Password changed successfully")
     )
 })
 
-const resetEmailandFullName = asyncHandler(async (req, res) => {
+const updateUserDetails = asyncHandler(async (req, res) => {
     const {email, fullName} = req.body
     const userId = req.user._id
     const userWithNewEmailandFullName = await User.findByIdAndUpdate(userId, {
@@ -273,7 +274,7 @@ export {
     logoutUser,
     refreshAccessToken,
     resetPassword,
-    resetEmailandFullName,
+    updateUserDetails,
     getUserData,
     changeAvatar,
     changeCoverImage
