@@ -227,6 +227,46 @@ const getUserData = asyncHandler(async (req, res) => {
     )
 })
 
+const changeAvatar = asyncHandler(async (req, res) => {
+    const avatarLocalFilepath = req.files["avatar"][0].path
+    if (!avatarLocalFilepath) {
+        throw new ApiError(400, "Avatar image is required")
+    }
+    const avatar = await uploadOnCloudinary(avatarLocalFilepath)
+    if (!avatar) {
+        throw new ApiError(500, "Something went wrong while uploading the avatar on cloudinary")
+    }
+    const userWithNewAvatar = await User.findByIdAndUpdate(req.user._id, {
+        $set: { avatar: avatar.url }
+    }, {new: true})
+    if (!userWithNewAvatar) {
+        throw new ApiError(500, "Something went wrong while saving the avatar url on db")
+    }
+    res.status(200).json(
+        new ApiResponse(200, {}, "Avatar changed successfully")
+    )
+})
+
+const changeCoverImage = asyncHandler(async (req, res) => {
+    const coverImageLocalFilepath = req.files["coverImage"][0].path
+    if (!coverImageLocalFilepath) {
+        throw new ApiError(400, "Cover image is required")
+    }
+    const coverImage = await uploadOnCloudinary(coverImageLocalFilepath)
+    if (!coverImage) {
+        throw new ApiError(500, "Something went wrong while uploading the avatar on cloudinary")
+    }
+    const userWithNewCoverImage = await User.findByIdAndUpdate(req.user._id, {
+        $set: { coverImage: coverImage.url }
+    }, {new: true})
+    if (!userWithNewCoverImage) {
+        throw new ApiError(500, "Something went wrong while saving the avatar url on db")
+    }
+    res.status(200).json(
+        new ApiResponse(200, {}, "Cover image changed successfully")
+    )
+})
+
 export {
     registerUser,
     loginUser,
@@ -234,5 +274,7 @@ export {
     refreshAccessToken,
     resetPassword,
     resetEmailandFullName,
-    getUserData
+    getUserData,
+    changeAvatar,
+    changeCoverImage
 }
