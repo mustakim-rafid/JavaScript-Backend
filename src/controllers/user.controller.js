@@ -230,7 +230,7 @@ const getUserData = asyncHandler(async (req, res) => {
 })
 
 const changeAvatar = asyncHandler(async (req, res) => {
-    const avatarLocalFilepath = req.files["avatar"][0].path
+    const avatarLocalFilepath = req.file.path
     if (!avatarLocalFilepath) {
         throw new ApiError(400, "Avatar image is required")
     }
@@ -250,7 +250,7 @@ const changeAvatar = asyncHandler(async (req, res) => {
 })
 
 const changeCoverImage = asyncHandler(async (req, res) => {
-    const coverImageLocalFilepath = req.files["coverImage"][0].path
+    const coverImageLocalFilepath = req.file.path
     if (!coverImageLocalFilepath) {
         throw new ApiError(400, "Cover image is required")
     }
@@ -388,5 +388,7 @@ export {
     updateUserDetails,
     getUserData,
     changeAvatar,
-    changeCoverImage
+    changeCoverImage,
+    showChannelDetails,
+    getWatchHistory
 }
