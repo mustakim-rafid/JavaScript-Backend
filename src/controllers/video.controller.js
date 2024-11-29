@@ -85,6 +85,80 @@ const uploadVideo = asyncHandler(async (req, res) => {
     )
 })
 
+const getAllVideosofUser = asyncHandler(async (req, res) => {
+    const videos = await Video.find({
+        owner: req.user._id
+    }).select("-owner")
+    if (!videos) {
+        throw new ApiError(500, "Something went wrong while accessing the videos")
+    }
+    console.log(videos);
+    
+    res.status(200).json(
+        new ApiResponse(200, videos, "User's videos sended successfully")
+    )
+})
+
+const deleteVideo = asyncHandler(async (req, res) => {
+    const { id } = req.body
+
+    const deletedVidoe = await Video.findByIdAndDelete(id)
+    if (!deletedVidoe) {
+        throw new ApiError(500, "Something went wrong while deleting the video")
+    }
+    res.status(200).json(
+        new ApiResponse(200, {}, "Video deleted successfully")
+    )
+})
+
+const changeThumbnail = asyncHandler(async (req, res) => {
+    const { id } = req.body
+
+    const newThumbnailLocalFilePath = req.file.path
+    if (!newThumbnailLocalFilePath) {
+        throw new ApiError(400, "Thumbnail not found")
+    }
+
+    const newThumbnail = await uploadOnCloudinary(newThumbnailLocalFilePath)
+
+    const videoWithNewThumbnail = await Video.findByIdAndUpdate(id, {
+        $set: {
+            thumbnail: newThumbnail.url
+        }
+    }, {new: true})
+
+    if (!videoWithNewThumbnail) {
+        throw new ApiError(500, "Something went wrong while changing the thumbnail")
+    }
+
+    res.status(200).json(
+        new ApiResponse(200, {}, "Thumbnail changed successfully")
+    )
+})
+
+const updateVideoDetails = asyncHandler(async (req, res) => {
+    const { id, title, description } = req.body
+
+    const updatedVideo = await Video.findByIdAndUpdate(id, {
+        $set: {
+            title,
+            description
+        }
+    }, {new: true})
+
+    if (!updatedVideo) {
+        throw new ApiError(500, "Something went wrong while changing title and description")
+    }
+
+    res.status(200).json(
+        new ApiResponse(200, {}, "Video details updated successfully")
+    )
+})
+
 export {
-    uploadVideo
+    uploadVideo,
+    getAllVideosofUser,
+    deleteVideo,
+    changeThumbnail,
+    updateVideoDetails
 }
