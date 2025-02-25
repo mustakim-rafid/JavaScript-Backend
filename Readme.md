@@ -1,3 +1,5 @@
 ## JavaScript Backend Project
 
-This is a backend based project in JavaScript (MERN).
+This is a backend project in NodeJS (MERN).
+
+The Backend of a Video streaming platform.
